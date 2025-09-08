@@ -11,165 +11,165 @@ pygame.mixer.init()
 # Configurações da tela
 LARGURA, ALTURA = 1024, 768
 tela = pygame.display.set_mode((LARGURA, ALTURA))
-pygame.display.set_caption("Aventura Espacial - Edição Premium")
+pygame.display.set_caption("Space Dark LED")
 relogio = pygame.time.Clock()
 
-# Cores
+# Cores no tema dark LED
 PRETO = (0, 0, 0)
-BRANCO = (255, 255, 255)
-VERMELHO = (255, 0, 0)
-VERDE = (0, 255, 0)
-AZUL = (0, 0, 255)
-AMARELO = (255, 255, 0)
-ROXO = (128, 0, 128)
-CIANO = (0, 255, 255)
-LARANJA = (255, 165, 0)
+CINZA_ESCURO = (10, 10, 20)
+AZUL_LED = (0, 150, 255)
+ROXO_LED = (180, 0, 255)
+VERDE_LED = (0, 255, 150)
+VERMELHO_LED = (255, 20, 20)
+AMARELO_LED = (255, 255, 0)
+CIANO_LED = (0, 255, 255)
 
-# Criar diretório de assets se não existir
-if not os.path.exists('assets'):
-    os.makedirs('assets')
+# Carregar imagens
+def carregar_imagem(nome_arquivo, tamanho=None):
+    try:
+        # Verificar se o arquivo existe
+        if not os.path.exists(nome_arquivo):
+            # Criar uma imagem de fallback baseada no nome
+            superficie = pygame.Surface((64, 64), pygame.SRCALPHA)
+            
+            if "inimigo 1" in nome_arquivo:
+                # Inimigo tipo 1: círculo vermelho
+                pygame.draw.circle(superficie, VERMELHO_LED, (32, 32), 32)
+                pygame.draw.circle(superficie, (255, 100, 100), (32, 32), 24)
+                pygame.draw.circle(superficie, (200, 50, 50), (32, 32), 16)
+            elif "inimigo 2" in nome_arquivo:
+                # Inimigo tipo 2: triângulo azul (baseado na divisão matemática)
+                pontos = [(32, 10), (10, 54), (54, 54)]
+                pygame.draw.polygon(superficie, AZUL_LED, pontos)
+                pygame.draw.polygon(superficie, CIANO_LED, pontos, 3)
+                # Adicionar texto "12÷4=3.5"
+                fonte = pygame.font.SysFont("Arial", 12)
+                texto = fonte.render("12÷4=3.5", True, (255, 255, 255))
+                superficie.blit(texto, (20, 25))
+            elif "inimigo 3" in nome_arquivo:
+                # Inimigo tipo 3: quadrado roxo (baseado na multiplicação)
+                pygame.draw.rect(superficie, ROXO_LED, (10, 10, 44, 44))
+                pygame.draw.rect(superficie, (200, 100, 255), (15, 15, 34, 34), 3)
+                # Adicionar texto "1.2×0.5=0.6"
+                fonte = pygame.font.SysFont("Arial", 12)
+                texto = fonte.render("1.2×0.5=0.6", True, (255, 255, 255))
+                superficie.blit(texto, (18, 25))
+            elif "nave" in nome_arquivo:
+                # Nave do jogador
+                pontos = [(32, 10), (10, 54), (32, 44), (54, 54)]
+                pygame.draw.polygon(superficie, VERDE_LED, pontos)
+                pygame.draw.polygon(superficie, AMARELO_LED, pontos, 90)
+                pygame.draw.circle(superficie, AZUL_LED, (32, 20), 5)
+            else:
+                # Fallback genérico
+                pygame.draw.circle(superficie, (255, 0, 0), (32, 32), 32)
+                
+            if tamanho:
+                superficie = pygame.transform.scale(superficie, tamanho)
+            return superficie
+        
+        imagem = pygame.image.load(nome_arquivo).convert_alpha()
+        if tamanho:
+            imagem = pygame.transform.scale(imagem, tamanho)
+        return imagem
+    except:
+        # Fallback para uma imagem gerada se o arquivo não for encontrado
+        superficie = pygame.Surface((64, 64), pygame.SRCALPHA)
+        pygame.draw.circle(superficie, (255, 0, 0), (32, 32), 32)
+        return superficie
 
-# Gerar sprites programaticamente (caso não tenha imagens)
-def gerar_sprite_nave():
-    superficie = pygame.Surface((64, 64), pygame.SRCALPHA)
-    
-    # Corpo principal da nave
-    pygame.draw.polygon(superficie, AZUL, [(32, 0), (10, 50), (54, 50)])
-    
-    # Detalhes na nave
-    pygame.draw.polygon(superficie, CIANO, [(32, 15), (20, 45), (44, 45)])
-    pygame.draw.circle(superficie, AMARELO, (32, 25), 5)
-    
-    # Propulsores
-    pygame.draw.rect(superficie, LARANJA, (20, 50, 6, 10))
-    pygame.draw.rect(superficie, LARANJA, (38, 50, 6, 10))
-    
-    return superficie
+# Carregar sprites das imagens
+nave_img = carregar_imagem("nave.png", (100, 100))
+inimigo1_img = carregar_imagem("inimigo 1.png", (70, 70))
+inimigo2_img = carregar_imagem("inimigo 2.png", (70, 70))
+inimigo3_img = carregar_imagem("inimigo 3.png", (70, 70))
 
-def gerar_sprite_inimigo(tipo=0):
-    superficie = pygame.Surface((48, 48), pygame.SRCALPHA)
-    cores = [VERMELHO, ROXO, LARANJA]
+# Gerar outros sprites com tema LED
+def gerar_sprite_tiro_led():
+    superficie = pygame.Surface((10, 24), pygame.SRCALPHA)
     
-    if tipo == 0:  # Inimigo básico
-        pygame.draw.polygon(superficie, cores[tipo], [(24, 0), (0, 48), (48, 48)])
-        pygame.draw.circle(superficie, AMARELO, (24, 15), 8)
-    elif tipo == 1:  # Inimigo intermediário
-        pygame.draw.polygon(superficie, cores[tipo], [(24, 0), (0, 30), (0, 48), (48, 48), (48, 30)])
-        pygame.draw.circle(superficie, CIANO, (24, 15), 6)
-    else:  # Inimigo avançado
-        pontos = [(24, 0), (10, 20), (0, 40), (15, 48), (33, 48), (48, 40), (38, 20)]
-        pygame.draw.polygon(superficie, cores[tipo], pontos)
-        pygame.draw.circle(superficie, VERMELHO, (24, 25), 5)
-    
-    return superficie
-
-def gerar_sprite_tiro():
-    superficie = pygame.Surface((8, 20), pygame.SRCALPHA)
-    
-    # Tiro com gradiente
-    for i in range(20):
-        alpha = 255 - (i * 12)
+    # Tiro com gradiente mais realista
+    for i in range(24):
+        alpha = 200 - (i * 8)
         if alpha < 0: alpha = 0
-        cor = (255, 255, 200, alpha)
-        pygame.draw.rect(superficie, cor, (2, i, 4, 1))
+        cor = (0, 150, 255, alpha)
+        pygame.draw.rect(superficie, cor, (3, i, 4, 1))
     
-    pygame.draw.rect(superficie, CIANO, (0, 0, 8, 4))
-    pygame.draw.rect(superficie, AMARELO, (2, 4, 4, 12))
+    # Contorno mais suave
+    pygame.draw.rect(superficie, (0, 100, 200), (2, 4, 6, 16), 1)
+    
+    # Luz interna
+    pygame.draw.rect(superficie, (0, 100, 255, 100), (3, 4, 4, 16))
     
     return superficie
 
-def gerar_sprite_powerup(tipo):
+def gerar_sprite_powerup_led(tipo):
     superficie = pygame.Surface((32, 32), pygame.SRCALPHA)
     
     if tipo == 'vida':
-        pygame.draw.circle(superficie, VERMELHO, (16, 16), 12)
-        pygame.draw.circle(superficie, (255, 150, 150), (16, 16), 8)
-        # Símbolo de coração
+        # Coração mais realista
         pontos = [(16, 8), (22, 14), (16, 24), (10, 14)]
-        pygame.draw.polygon(superficie, BRANCO, pontos)
+        pygame.draw.polygon(superficie, (200, 50, 50, 200), pontos)
+        pygame.draw.polygon(superficie, (220, 70, 70), pontos, 2)
+        
     else:  # 'arma'
-        pygame.draw.circle(superficie, VERDE, (16, 16), 12)
-        pygame.draw.circle(superficie, (150, 255, 150), (16, 16), 8)
-        # Símbolo de arma
-        pygame.draw.rect(superficie, BRANCO, (12, 10, 8, 12))
-        pygame.draw.rect(superficie, BRANCO, (8, 16, 16, 4))
+        # Raio mais realista
+        pontos = [(16, 6), (22, 16), (16, 16), (22, 26), (16, 26), (10, 16), (16, 16)]
+        pygame.draw.polygon(superficie, (50, 100, 200, 200), pontos)
+        pygame.draw.polygon(superficie, (70, 120, 220), pontos, 2)
     
-    # Brilho exterior
-    pygame.draw.circle(superficie, (255, 255, 255, 50), (16, 16), 16, 2)
-    
-    return superficie
-
-def gerar_sprite_explosao(tamanho):
-    superficie = pygame.Surface((tamanho, tamanho), pygame.SRCALPHA)
-    
-    # Explosão com partículas
-    centro = tamanho // 2
-    raio = tamanho // 2
-    
-    # Núcleo da explosão
-    pygame.draw.circle(superficie, (255, 255, 200), (centro, centro), raio // 3)
-    
-    # Partículas
-    for i in range(15):
-        angulo = random.uniform(0, 2 * math.pi)
-        distancia = random.uniform(raio // 3, raio)
-        x = centro + int(math.cos(angulo) * distancia)
-        y = centro + int(math.sin(angulo) * distancia)
-        tamanho_part = random.randint(2, 6)
-        cor = random.choice([(255, 200, 0), (255, 100, 0), (255, 50, 0)])
-        pygame.draw.circle(superficie, cor, (x, y), tamanho_part)
+    # Contorno circular
+    pygame.draw.circle(superficie, (100, 100, 150, 100), (16, 16), 15)
+    pygame.draw.circle(superficie, (150, 150, 200), (16, 16), 15, 2)
     
     return superficie
 
-def gerar_fundo_estrelas():
+def gerar_fundo_estrelas_led():
     superficie = pygame.Surface((LARGURA, ALTURA))
-    superficie.fill(PRETO)
+    superficie.fill(CINZA_ESCURO)
     
-    # Estrelas básicas
+    # Estrelas mais realistas (pontos brancos com variação de tamanho)
     for i in range(200):
         x = random.randint(0, LARGURA - 1)
         y = random.randint(0, ALTURA - 1)
-        tamanho = random.randint(1, 3)
+        tamanho = random.randint(1, 2)
         brilho = random.randint(150, 255)
         pygame.draw.circle(superficie, (brilho, brilho, brilho), (x, y), tamanho)
     
-    # Estrelas brilhantes
-    for i in range(20):
+    # Algumas estrelas coloridas (menos que antes)
+    for i in range(10):
         x = random.randint(0, LARGURA - 1)
         y = random.randint(0, ALTURA - 1)
-        tamanho = random.randint(2, 4)
-        cor = random.choice([(255, 255, 200), (200, 200, 255), (255, 200, 200)])
+        tamanho = random.randint(2, 3)
+        cor = random.choice([AZUL_LED, ROXO_LED])
         pygame.draw.circle(superficie, cor, (x, y), tamanho)
-        pygame.draw.circle(superficie, BRANCO, (x, y), 1)
     
-    # Nebulosa
+    # Nebulosa sutil
     for i in range(5):
-        x = random.randint(0, LARGURA - 1)
-        y = random.randint(0, ALTURA - 1)
-        raio = random.randint(50, 200)
-        cor = random.choice([(30, 10, 50), (10, 30, 50), (50, 10, 30)])
+        x = random.randint(0, LARGURA)
+        y = random.randint(0, ALTURA)
+        raio = random.randint(50, 150)
+        cor = random.choice([(30, 30, 50), (40, 20, 60), (20, 40, 60)])
         for r in range(raio, 0, -5):
-            alpha = max(0, 100 - (raio - r) * 2)
-            s = pygame.Surface((r*2, r*2), pygame.SRCALPHA)
-            pygame.draw.circle(s, (*cor, alpha), (r, r), r)
-            superficie.blit(s, (x - r, y - r))
+            alpha = 10 - (r/raio * 10)
+            if alpha > 0:
+                s = pygame.Surface((r*2, r*2), pygame.SRCALPHA)
+                pygame.draw.circle(s, (*cor, alpha), (r, r), r)
+                superficie.blit(s, (x-r, y-r))
     
     return superficie
 
-# Carregar sprites
-nave_img = gerar_sprite_nave()
-inimigo_imgs = [gerar_sprite_inimigo(i) for i in range(3)]
-tiro_img = gerar_sprite_tiro()
+# Carregar sprites LED restantes
+tiro_img = gerar_sprite_tiro_led()
 powerup_imgs = {
-    'vida': gerar_sprite_powerup('vida'),
-    'arma': gerar_sprite_powerup('arma')
+    'vida': gerar_sprite_powerup_led('vida'),
+    'arma': gerar_sprite_powerup_led('arma')
 }
-explosao_imgs = [gerar_sprite_explosao(64) for _ in range(5)]
-fundo_estrelas = gerar_fundo_estrelas()
+fundo_estrelas = gerar_fundo_estrelas_led()
 
-# Efeitos de partículas
-class Particula:
-    def __init__(self, x, y, cor, velocidade=1, tamanho=2, vida=30):
+# Efeitos de partículas LED
+class ParticulaLED:
+    def __init__(self, x, y, cor, velocidade=1, tamanho=2, vida=30, trail=False):
         self.x = x
         self.y = y
         self.cor = cor
@@ -177,30 +177,54 @@ class Particula:
         self.tamanho = tamanho
         self.vida = vida
         self.vida_max = vida
+        self.trail = trail
+        self.trail_points = []
         angle = random.uniform(0, 2 * math.pi)
         self.vx = math.cos(angle) * random.uniform(0.5, 2) * velocidade
         self.vy = math.sin(angle) * random.uniform(0.5, 2) * velocidade
     
     def update(self):
+        if self.trail and len(self.trail_points) < 5:
+            self.trail_points.append((self.x, self.y))
+        
         self.x += self.vx
         self.y += self.vy
         self.vida -= 1
-        self.tamanho = max(0, self.tamanho * (self.vida / self.vida_max))
+        
+        # Reduzir tamanho ao longo da vida
+        self.tamanho = max(0.5, self.tamanho * (self.vida / self.vida_max))
         return self.vida <= 0
     
     def draw(self, surface):
         alpha = 255 * (self.vida / self.vida_max)
+        
+        # Desenhar trilha se aplicável
+        if self.trail and len(self.trail_points) > 1:
+            for i in range(1, len(self.trail_points)):
+                pos_prev = self.trail_points[i-1]
+                pos = self.trail_points[i]
+                trail_alpha = alpha * (i / len(self.trail_points))
+                pygame.draw.line(surface, (*self.cor, trail_alpha), 
+                                pos_prev, pos, max(1, int(self.tamanho/2)))
+        
+        # Desenhar partícula principal
         s = pygame.Surface((self.tamanho*2, self.tamanho*2), pygame.SRCALPHA)
         pygame.draw.circle(s, (*self.cor, alpha), (self.tamanho, self.tamanho), self.tamanho)
+        
+        # Efeito de brilho LED
+        if self.tamanho > 1.5:
+            pygame.draw.circle(s, (255, 255, 255, alpha/2), 
+                              (self.tamanho, self.tamanho), self.tamanho/2)
+        
         surface.blit(s, (int(self.x - self.tamanho), int(self.y - self.tamanho)))
 
-class SistemaParticulas:
+class SistemaParticulasLED:
     def __init__(self):
         self.particulas = []
     
-    def add_particulas(self, x, y, cor, count=10, velocidade=1, tamanho=2, vida=30):
+    def add_particulas(self, x, y, cor, count=10, velocidade=1, tamanho=2, vida=30, trail=False):
         for _ in range(count):
-            self.particulas.append(Particula(x, y, cor, velocidade, tamanho, vida))
+            self.particulas.append(ParticulaLED(x, y, cor, velocidade, tamanho, vida, trail))
     
     def update(self):
         for particula in self.particulas[:]:
@@ -211,15 +235,48 @@ class SistemaParticulas:
         for particula in self.particulas:
             particula.draw(surface)
 
-# Classes do jogo
-class Jogador:
+# Configurações de dificuldade por fase (VERSÃO MAIS FÁCIL)
+CONFIG_FASES = [
+    # Fase 1: Muito fácil - apenas inimigos básicos lentos
+    {"inimigos_por_nivel": 4, "velocidade_inimigos": 0.8, "inimigo_tipo": 0, "powerup_chance": 0.7},
+    
+    # Fase 2: Fácil - alguns inimigos básicos
+    {"inimigos_por_nivel": 5, "velocidade_inimigos": 0.9, "inimigo_tipo": 0.1, "powerup_chance": 0.6},
+    
+    # Fase 3: Moderadamente fácil - mistura de básicos e alguns intermediários
+    {"inimigos_por_nivel": 6, "velocidade_inimigos": 1.0, "inimigo_tipo": 0.2, "powerup_chance": 0.5},
+    
+    # Fase 4: Moderada - mais inimigos intermediários
+    {"inimigos_por_nivel": 7, "velocidade_inimigos": 1.1, "inimigo_tipo": 0.3, "powerup_chance": 0.5},
+    
+    # Fase 5: Moderada - mistura equilibrada
+    {"inimigos_por_nivel": 8, "velocidade_inimigos": 1.2, "inimigo_tipo": 0.4, "powerup_chance": 0.4},
+    
+    # Fase 6: Moderadamente difícil - mais inimigos intermediários
+    {"inimigos_por_nivel": 9, "velocidade_inimigos": 1.3, "inimigo_tipo": 0.5, "powerup_chance": 0.4},
+    
+    # Fase 7: Difícil - aparecem inimigos avançados
+    {"inimigos_por_nivel": 10, "velocidade_inimigos": 1.4, "inimigo_tipo": 0.6, "powerup_chance": 0.3},
+    
+    # Fase 8: Muito difícil - muitos inimigos avançados
+    {"inimigos_por_nivel": 12, "velocidade_inimigos": 1.5, "inimigo_tipo": 0.7, "powerup_chance": 0.3},
+    
+    # Fase 9: Extremamente difícil - desafio máximo
+    {"inimigos_por_nivel": 14, "velocidade_inimigos": 1.6, "inimigo_tipo": 0.8, "powerup_chance": 0.2},
+    
+    # Fase 10: Boss final - fase especial
+    {"inimigos_por_nivel": 20, "velocidade_inimigos": 1.7, "inimigo_tipo": 0.9, "powerup_chance": 0.7, "boss": True}
+]
+
+# Classes do jogo com tema LED
+class JogadorLED:
     def __init__(self, todos_sprites, sistemas_particulas):
         self.image = nave_img
         self.rect = self.image.get_rect()
         self.rect.centerx = LARGURA // 2
         self.rect.bottom = ALTURA - 50
         self.velocidade = 8
-        self.vidas = 3
+        self.vidas = 5  # Mais vidas para facilitar
         self.pontuacao = 0
         self.powerup_tempo = 0
         self.powerup_ativo = False
@@ -229,45 +286,46 @@ class Jogador:
         self.sistemas_particulas = sistemas_particulas
         self.invulneravel = False
         self.invulneravel_tempo = 0
+        self.efeito_led_timer = 0
     
     def update(self, teclas):
         if teclas[pygame.K_LEFT] and self.rect.left > 0:
             self.rect.x -= self.velocidade
-            # Partículas do propulsor
+            # Partículas do propulsor esquerdo
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx + 15, self.rect.bottom, 
-                LARANJA, 2, 2, 3, 15
+                (255, 100, 0), 2, 2, 3, 15, True
             )
         if teclas[pygame.K_RIGHT] and self.rect.right < LARGURA:
             self.rect.x += self.velocidade
-            # Partículas do propulsor
+            # Partículas do propulsor direito
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx - 15, self.rect.bottom, 
-                LARANJA, 2, 2, 3, 15
+                (255, 100, 0), 2, 2, 3, 15, True
             )
         if teclas[pygame.K_UP] and self.rect.top > 0:
             self.rect.y -= self.velocidade
-            # Partículas do propulsor
+            # Partículas do propulsor principal
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx, self.rect.bottom, 
-                LARANJA, 3, 3, 4, 20
+                (255, 150, 0), 3, 3, 4, 20, True
             )
         if teclas[pygame.K_DOWN] and self.rect.bottom < ALTURA:
             self.rect.y += self.velocidade
             # Partículas do propulsor traseiro
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx, self.rect.top, 
-                AZUL, 2, 1, 2, 10
+                (200, 200, 200), 2, 1, 2, 10, True
             )
             
         # Partículas contínuas dos propulsores
         self.sistemas_particulas.add_particulas(
             self.rect.centerx + 15, self.rect.bottom, 
-            LARANJA, 1, 2, 2, 10
+            (255, 100, 0), 1, 2, 2, 10, True
         )
         self.sistemas_particulas.add_particulas(
             self.rect.centerx - 15, self.rect.bottom, 
-            LARANJA, 1, 2, 2, 10
+            (255, 100, 0), 1, 2, 2, 10, True
         )
             
         if self.powerup_ativo and pygame.time.get_ticks() > self.powerup_tempo:
@@ -278,120 +336,169 @@ class Jogador:
         if self.invulneravel:
             if pygame.time.get_ticks() > self.invulneravel_tempo:
                 self.invulneravel = False
-            # Piscar quando invulnerável
-            if pygame.time.get_ticks() % 200 < 100:
-                self.image.set_alpha(128)
-            else:
-                self.image.set_alpha(255)
+            # Efeito LED piscante quando invulnerável
+            self.efeito_led_timer += 1
+            if self.efeito_led_timer % 10 < 5:
+                # Adicionar partículas de efeito LED
+                self.sistemas_particulas.add_particulas(
+                    self.rect.centerx, self.rect.centery,
+                    CIANO_LED, 3, 1, 2, 15
+                )
         else:
-            self.image.set_alpha(255)
+            self.efeito_led_timer = 0
 
     def atirar(self, tiros):
         agora = pygame.time.get_ticks()
         if agora - self.ultimo_tiro > self.tempo_recarga:
             self.ultimo_tiro = agora
-            tiros.append(Tiro(self.rect.centerx, self.rect.top, 0, self.todos_sprites, self.sistemas_particulas))
+            tiros.append(TiroLED(self.rect.centerx, self.rect.top, 0, self.todos_sprites, self.sistemas_particulas))
             
-            # Efeito de partículas ao atirar
+            # Efeito de partículas LED ao atirar
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx, self.rect.top, 
-                CIANO, 5, 3, 2, 15
+                CIANO_LED, 5, 3, 2, 15, True
             )
             
             if self.powerup_ativo:
-                tiros.append(Tiro(self.rect.centerx, self.rect.top, -1, self.todos_sprites, self.sistemas_particulas))
-                tiros.append(Tiro(self.rect.centerx, self.rect.top, 1, self.todos_sprites, self.sistemas_particulas))
+                tiros.append(TiroLED(self.rect.centerx, self.rect.top, -1, self.todos_sprites, self.sistemas_particulas))
+                tiros.append(TiroLED(self.rect.centerx, self.rect.top, 1, self.todos_sprites, self.sistemas_particulas))
 
     def powerup(self):
         self.powerup_ativo = True
         self.powerup_tempo = pygame.time.get_ticks() + 5000
         self.tempo_recarga = 100
         
-        # Efeito visual de power-up
+        # Efeito visual LED de power-up
         for _ in range(20):
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx, self.rect.centery,
-                VERDE, 1, 2, 4, 30
+                VERDE_LED, 1, 2, 4, 30, True
             )
 
     def tomar_dano(self):
         if not self.invulneravel:
             self.vidas -= 1
             self.invulneravel = True
-            self.invulneravel_tempo = pygame.time.get_ticks() + 2000  # 2 segundos de invulnerabilidade
+            self.invulneravel_tempo = pygame.time.get_ticks() + 2000
             
-            # Efeito de partículas ao tomar dano
+            # Efeito de partículas LED ao tomar dano
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx, self.rect.centery,
-                VERMELHO, 20, 3, 4, 40
+                VERMELHO_LED, 20, 3, 4, 40, True
             )
             
             return self.vidas <= 0
         return False
 
-class Inimigo:
-    def __init__(self, nivel, todos_sprites, sistemas_particulas):
-        self.tipo = min(nivel // 2, 2)  # Tipo baseado no nível
-        self.image = inimigo_imgs[self.tipo]
+class InimigoLED:
+    def __init__(self, nivel, config_fase, todos_sprites, sistemas_particulas):
+        # Escolher tipo de inimigo baseado na configuração da fase
+        tipo_aleatorio = random.random()
+        
+        if tipo_aleatorio < 0.33:  # Inimigo tipo 1 (básico)
+            self.image = inimigo1_img
+            self.tipo = 1
+            self.vida = 1
+            self.pontos = 100
+            self.cor_led = VERMELHO_LED
+            self.raio_visao = 200
+            self.velocidade_base = 1.0
+        elif tipo_aleatorio < 0.66:  # Inimigo tipo 2 (intermediário)
+            self.image = inimigo2_img
+            self.tipo = 2
+            self.vida = 2
+            self.pontos = 200
+            self.cor_led = AZUL_LED
+            self.raio_visao = 250
+            self.velocidade_base = 1.2
+        else:  # Inimigo tipo 3 (avançado)
+            self.image = inimigo3_img
+            self.tipo = 3
+            self.vida = 3
+            self.pontos = 300
+            self.cor_led = ROXO_LED
+            self.raio_visao = 300
+            self.velocidade_base = 1.5
+        
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(LARGURA - self.rect.width)
         self.rect.y = random.randrange(-150, -50)
-        self.speedy = random.randrange(1, 3 + nivel // 2)
-        self.speedx = random.randrange(-2 - nivel // 2, 2 + nivel // 2)
+        self.speedy = random.randrange(1, 3) * config_fase["velocidade_inimigos"] * self.velocidade_base
+        self.speedx = random.randrange(-2, 2) * config_fase["velocidade_inimigos"] * self.velocidade_base
         self.nivel = nivel
         self.todos_sprites = todos_sprites
         self.sistemas_particulas = sistemas_particulas
-        self.vida = 1 + self.tipo  # Inimigos mais fortes têm mais vida
-        self.raio_visao = 300 + self.tipo * 100  # Raio de perseguição
-        
-        # Partículas de propulsão
         self.particula_timer = 0
+        self.tiro_timer = 0
+        self.tempo_recarga_tiro = 60  # Frames entre tiros
 
     def update(self, jogador_x, jogador_y):
         self.rect.y += self.speedy
         self.rect.x += self.speedx
         
-        # Partículas de propulsão
+        # Partículas de propulsão LED
         self.particula_timer += 1
         if self.particula_timer >= 5:
             self.particula_timer = 0
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx, self.rect.bottom,
-                (200, 100, 100), 1, 1, 2, 20
+                self.cor_led, 1, 1, 2, 20, True
             )
         
-        # IA: perseguir jogador se estiver dentro do raio de visão
+        # IA diferente para cada tipo de inimigo
         dx = jogador_x - self.rect.centerx
         dy = jogador_y - self.rect.centery
         distancia = math.sqrt(dx*dx + dy*dy)
         
-        if distancia < self.raio_visao and self.tipo > 0:
-            # Suavizar o movimento de perseguição
-            fator = 0.05 + self.tipo * 0.02
-            self.rect.x += dx * fator
-            self.rect.y += dy * fator
-        elif self.tipo == 2:  # Inimigos avançados têm movimento sinuoso
-            self.rect.x += math.sin(pygame.time.get_ticks() * 0.001 + self.rect.y * 0.1) * 2
+        # Comportamento baseado no tipo de inimigo
+        if self.tipo == 1:  # Inimigo básico - movimento simples
+            if distancia < self.raio_visao:
+                fator = 0.03
+                self.rect.x += dx * fator
+                self.rect.y += dy * fator
+                
+        elif self.tipo == 2:  # Inimigo intermediário - movimento em zigue-zague
+            if distancia < self.raio_visao:
+                fator = 0.04
+                self.rect.x += dx * fator + math.sin(pygame.time.get_ticks() * 0.001) * 2
+                self.rect.y += dy * fator
+                
+        elif self.tipo == 3:  # Inimigo avançado - movimento circular e atira
+            if distancia < self.raio_visao:
+                fator = 0.05
+                angulo = math.atan2(dy, dx)
+                # Movimento circular ao redor do jogador
+                self.rect.x += math.cos(angulo + math.pi/2) * 3 + dx * fator * 0.5
+                self.rect.y += math.sin(angulo + math.pi/2) * 3 + dy * fator * 0.5
+                
+                # Tenta atirar no jogador
+                self.tiro_timer += 1
+                if self.tiro_timer >= self.tempo_recarga_tiro and distancia < 300:
+                    self.tiro_timer = 0
+                    # Criar um tiro inimigo (será implementado na lógica principal)
+                    return True, (self.rect.centerx, self.rect.centery, angulo)
         
         # Se sair da tela, reaparece em cima
         if self.rect.top > ALTURA + 10 or self.rect.left < -50 or self.rect.right > LARGURA + 50:
             self.rect.x = random.randrange(LARGURA - self.rect.width)
             self.rect.y = random.randrange(-100, -40)
-            self.speedy = random.randrange(1, 4 + self.nivel // 2)
+            self.speedy = random.randrange(1, 3) * self.velocidade_base
+        
+        return False, None
 
     def tomar_dano(self, dano=1):
         self.vida -= dano
         
-        # Efeito de partículas ao tomar dano
+        # Efeito de partículas LED ao tomar dano
         self.sistemas_particulas.add_particulas(
             self.rect.centerx, self.rect.centery,
-            (255, 200, 100), 10, 2, 3, 25
+            self.cor_led, 10, 2, 3, 25, True
         )
         
         return self.vida <= 0
 
-class Tiro:
-    def __init__(self, x, y, direcao, todos_sprites, sistemas_particulas):
+class TiroLED:
+    def __init__(self, x, y, direcao, todos_sprites, sistemas_particulas, inimigo=False, angulo=None):
         self.image = tiro_img
         self.rect = self.image.get_rect()
         self.rect.centerx = x
@@ -401,24 +508,41 @@ class Tiro:
         self.todos_sprites = todos_sprites
         self.sistemas_particulas = sistemas_particulas
         self.particula_timer = 0
+        self.inimigo = inimigo
+        
+        # Para tiros de inimigos com direção específica
+        if inimigo and angulo is not None:
+            self.vx = math.cos(angulo) * 5
+            self.vy = math.sin(angulo) * 5
+            self.speedy = 0  # Anula a velocidade padrão
+            # Mudar cor para tiro inimigo
+            self.cor_led = VERMELHO_LED if not inimigo else ROXO_LED
+        else:
+            self.vx = direcao * 5
+            self.vy = -10
+            self.cor_led = CIANO_LED if not inimigo else ROXO_LED
 
     def update(self):
-        self.rect.y += self.speedy
-        self.rect.x += self.direcao * 5
+        if self.inimigo:
+            self.rect.x += self.vx
+            self.rect.y += self.vy
+        else:
+            self.rect.y += self.speedy
+            self.rect.x += self.direcao * 5
         
-        # Partículas de rastro
+        # Partículas de rastro LED
         self.particula_timer += 1
         if self.particula_timer >= 2:
             self.particula_timer = 0
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx, self.rect.bottom,
-                CIANO, 1, 1, 2, 15
+                self.cor_led, 1, 1, 2, 15, True
             )
         
         # Se sair da tela, marca para remoção
-        return self.rect.bottom < 0
+        return self.rect.bottom < 0 or self.rect.top > ALTURA or self.rect.right < 0 or self.rect.left > LARGURA
 
-class PowerUp:
+class PowerUpLED:
     def __init__(self, x, y, tipo, todos_sprites, sistemas_particulas):
         self.type = tipo
         self.image = powerup_imgs[tipo]
@@ -429,27 +553,27 @@ class PowerUp:
         self.todos_sprites = todos_sprites
         self.sistemas_particulas = sistemas_particulas
         self.oscillate = 0
+        self.cor_led = AZUL_LED if tipo == 'arma' else VERMELHO_LED
 
     def update(self):
         self.rect.y += self.speedy
         
-        # Oscilação para efeito visual
+        # Oscilação para efeito visual LED
         self.oscillate += 0.1
         self.rect.x += math.sin(self.oscillate) * 0.5
         
-        # Partículas de brilho
+        # Partículas de brilho LED
         if random.random() < 0.1:
             self.sistemas_particulas.add_particulas(
                 self.rect.centerx, self.rect.centery,
-                VERDE if self.type == 'arma' else VERMELHO, 
-                3, 1, 2, 30
+                self.cor_led, 3, 1, 2, 30, True
             )
         
-        return self.rect.top > ALTURA  # Retorna True se saiu da tela
+        return self.rect.top > ALTURA
 
-# Função para mostrar texto com efeito
-def mostrar_texto(surface, texto, tamanho, x, y, cor=BRANCO, sombra=True):
-    fonte = pygame.font.SysFont("Arial", tamanho)
+# Função para mostrar texto com estilo LED
+def mostrar_texto_led(surface, texto, tamanho, x, y, cor=AZUL_LED, sombra=True):
+    fonte = pygame.font.SysFont("Consolas", tamanho)
     
     if sombra:
         texto_sombra = fonte.render(texto, True, (0, 0, 0))
@@ -462,50 +586,51 @@ def mostrar_texto(surface, texto, tamanho, x, y, cor=BRANCO, sombra=True):
     texto_rect.midtop = (x, y)
     surface.blit(texto_surface, texto_rect)
 
-# Função para desenhar barra de vida com estilo
-def desenhar_barra_vida(surface, x, y, porcentagem, largura=100, altura=15):
-    # Fundo
-    pygame.draw.rect(surface, (50, 50, 50), (x, y, largura, altura))
+# Função para desenhar barra de vida com estilo LED
+def desenhar_barra_vida_led(surface, x, y, porcentagem, largura=100, altura=12):
+    # Fundo escuro
+    pygame.draw.rect(surface, (30, 30, 40), (x, y, largura, altura))
     
-    # Vida
+    # Vida (gradiente LED)
     fill = max(0, (porcentagem / 100) * largura)
     if fill > 0:
-        # Gradiente de cor
         for i in range(int(fill)):
             cor_progresso = i / fill
-            r = int(255 * (1 - cor_progresso) + 0 * cor_progresso)
-            g = int(0 * (1 - cor_progresso) + 255 * cor_progresso)
-            pygame.draw.rect(surface, (r, g, 0), (x + i, y, 1, altura))
+            r = int(255 * (1 - cor_progresso))
+            g = int(255 * cor_progresso)
+            b = int(150 * cor_progresso)
+            pygame.draw.rect(surface, (r, g, b), (x + i, y, 1, altura))
     
-    # Borda
-    pygame.draw.rect(surface, BRANCO, (x, y, largura, altura), 2)
+    # Contorno LED
+    pygame.draw.rect(surface, AZUL_LED, (x, y, largura, altura), 2)
     
-    # Detalhes internos
-    for i in range(0, largura, 5):
-        pygame.draw.line(surface, (100, 100, 100), (x + i, y), (x + i, y + altura), 1)
+    # Marcadores LED
+    for i in range(0, largura, 20):
+        pygame.draw.line(surface, (80, 80, 100), (x + i, y), (x + i, y + altura), 1)
 
-# Função para mostrar tela de início com efeitos
-def mostrar_tela_inicio(sistemas_particulas):
-    tela.fill(PRETO)
+# Função para mostrar tela de início com tema LED
+def mostrar_tela_inicio_led(sistemas_particulas):
+    tela.fill(CINZA_ESCURO)
     tela.blit(fundo_estrelas, (0, 0))
     
-    # Adicionar partículas para efeito
+    # Adicionar partículas LED para efeito
     for _ in range(5):
         x = random.randint(0, LARGURA)
         y = random.randint(0, ALTURA)
-        sistemas_particulas.add_particulas(x, y, CIANO, 10, 2, 3, 50)
+        cor = random.choice([AZUL_LED, ROXO_LED, CIANO_LED])
+        sistemas_particulas.add_particulas(x, y, cor, 10, 2, 3, 50, True)
     
     sistemas_particulas.update()
     sistemas_particulas.draw(tela)
     
-    # Título com efeito
-    mostrar_texto(tela, "AVENTURA ESPACIAL", 72, LARGURA // 2, ALTURA // 4, CIANO)
-    mostrar_texto(tela, "Edição Premium", 36, LARGURA // 2, ALTURA // 4 + 70, AMARELO)
+    # Título com efeito LED
+    mostrar_texto_led(tela, "SPACE DARK LED", 72, LARGURA // 2, ALTURA // 4, AZUL_LED)
+    mostrar_texto_led(tela, "REALISTIC EDITION", 36, LARGURA // 2, ALTURA // 4 + 70, ROXO_LED)
     
     # Instruções
-    mostrar_texto(tela, "Setas para mover, Espaço para atirar", 28, LARGURA // 2, ALTURA // 2)
-    mostrar_texto(tela, "Colete power-ups para melhorar sua nave", 24, LARGURA // 2, ALTURA // 2 + 40)
-    mostrar_texto(tela, "Pressione qualquer tecla para começar", 22, LARGURA // 2, ALTURA * 3/4)
+    mostrar_texto_led(tela, "Setas para mover, Espaço para atirar", 28, LARGURA // 2, ALTURA // 2, CIANO_LED)
+    mostrar_texto_led(tela, "Colete power-ups para melhorar sua nave", 24, LARGURA // 2, ALTURA // 2 + 40, VERDE_LED)
+    mostrar_texto_led(tela, "Pressione qualquer tecla para começar", 22, LARGURA // 2, ALTURA * 3/4, AMARELO_LED)
     
     pygame.display.flip()
     
@@ -519,24 +644,24 @@ def mostrar_tela_inicio(sistemas_particulas):
             if evento.type == pygame.KEYUP:
                 esperando = False
 
-# Função para mostrar tela de game over com estilo
-def mostrar_game_over(pontuacao, nivel, sistemas_particulas):
-    tela.fill(PRETO)
+# Função para mostrar tela de game over com estilo LED
+def mostrar_game_over_led(pontuacao, nivel, sistemas_particulas):
+    tela.fill(CINZA_ESCURO)
     tela.blit(fundo_estrelas, (0, 0))
     
-    # Adicionar partículas para efeito
+    # Adicionar partículas LED para efeito
     for _ in range(10):
         x = random.randint(0, LARGURA)
         y = random.randint(0, ALTURA)
-        sistemas_particulas.add_particulas(x, y, VERMELHO, 15, 2, 4, 60)
+        sistemas_particulas.add_particulas(x, y, VERMELHO_LED, 15, 2, 4, 60, True)
     
     sistemas_particulas.update()
     sistemas_particulas.draw(tela)
     
-    mostrar_texto(tela, "FIM DE JOGO", 80, LARGURA // 2, ALTURA // 4, VERMELHO)
-    mostrar_texto(tela, f"Pontuação: {pontuacao}", 40, LARGURA // 2, ALTURA // 2 - 30)
-    mostrar_texto(tela, f"Nível alcançado: {nivel}", 40, LARGURA // 2, ALTURA // 2 + 20)
-    mostrar_texto(tela, "Pressione qualquer tecla para jogar novamente", 24, LARGURA // 2, ALTURA * 3/4)
+    mostrar_texto_led(tela, "GAME OVER", 80, LARGURA // 2, ALTURA // 4, VERMELHO_LED)
+    mostrar_texto_led(tela, f"Pontuação: {pontuacao}", 40, LARGURA // 2, ALTURA // 2 - 30, CIANO_LED)
+    mostrar_texto_led(tela, f"Nível alcançado: {nivel}", 40, LARGURA // 2, ALTURA // 2 + 20, AZUL_LED)
+    mostrar_texto_led(tela, "Pressione qualquer tecla para jogar novamente", 24, LARGURA // 2, ALTURA * 3/4, AMARELO_LED)
     
     pygame.display.flip()
     
@@ -550,57 +675,65 @@ def mostrar_game_over(pontuacao, nivel, sistemas_particulas):
             if evento.type == pygame.KEYUP:
                 esperando = False
 
-# Função para mostrar tela de nível completo
-def mostrar_nivel_completo(nivel, sistemas_particulas):
-    tela.fill(PRETO)
+# Função para mostrar tela de nível completo com LED
+def mostrar_nivel_completo_led(nivel, sistemas_particulas):
+    tela.fill(CINZA_ESCURO)
     tela.blit(fundo_estrelas, (0, 0))
     
-    # Adicionar partículas para efeito
+    # Adicionar partículas LED para efeito
     for _ in range(15):
         x = random.randint(0, LARGURA)
         y = random.randint(0, ALTURA)
-        sistemas_particulas.add_particulas(x, y, VERDE, 20, 2, 4, 70)
+        cor = random.choice([VERDE_LED, AZUL_LED, CIANO_LED])
+        sistemas_particulas.add_particulas(x, y, cor, 20, 2, 4, 70, True)
     
     sistemas_particulas.update()
     sistemas_particulas.draw(tela)
     
-    mostrar_texto(tela, "NÍVEL COMPLETO!", 64, LARGURA // 2, ALTURA // 3, VERDE)
-    mostrar_texto(tela, f"Próximo nível: {nivel + 1}", 48, LARGURA // 2, ALTURA // 2)
-    mostrar_texto(tela, "Preparando-se para o próximo desafio...", 28, LARGURA // 2, ALTURA * 2/3)
+    mostrar_texto_led(tela, "NÍVEL COMPLETO!", 64, LARGURA // 2, ALTURA // 3, VERDE_LED)
+    mostrar_texto_led(tela, f"Fase {nivel + 1} concluída!", 48, LARGURA // 2, ALTURA // 2, AZUL_LED)
+    
+    if nivel < len(CONFIG_FASES) - 1:
+        mostrar_texto_led(tela, f"Próxima fase: {nivel + 2}", 36, LARGURA // 2, ALTURA // 2 + 50, CIANO_LED)
+    else:
+        mostrar_texto_led(tela, "Parabéns! Você completou todas as fases!", 36, LARGURA // 2, ALTURA // 2 + 50, AMARELO_LED)
     
     pygame.display.flip()
-    pygame.time.delay(2500)  # 2.5 segundos
+    pygame.time.delay(2500)
 
 # Inicialização do jogo
-sistemas_particulas = SistemaParticulas()
-mostrar_tela_inicio(sistemas_particulas)
+sistemas_particulas = SistemaParticulasLED()
+mostrar_tela_inicio_led(sistemas_particulas)
 
 # Loop principal do jogo
 game_over = False
 executando = True
-nivel = 1
-inimigos_por_nivel = 8
+nivel = 0  # Começa na fase 1 (índice 0)
+total_fases = len(CONFIG_FASES)
 
 while executando:
     if game_over:
-        mostrar_game_over(jogador.pontuacao, nivel, sistemas_particulas)
+        mostrar_game_over_led(jogador.pontuacao, nivel, sistemas_particulas)
         game_over = False
-        nivel = 1
-        inimigos_por_nivel = 8
+        nivel = 0  # Reinicia na fase 1
+    
+    # Obter configuração da fase atual
+    config_fase = CONFIG_FASES[min(nivel, len(CONFIG_FASES) - 1)]
     
     # Inicializar listas de objetos
     todos_sprites = []
     inimigos = []
     tiros = []
+    tiros_inimigos = []
     powerups = []
     
     # Criar jogador
-    jogador = Jogador(todos_sprites, sistemas_particulas)
+    jogador = JogadorLED(todos_sprites, sistemas_particulas)
     todos_sprites.append(jogador)
     
-    # Criar inimigos
-    for i in range(inimigos_por_nivel):
-        inimigo = Inimigo(nivel, todos_sprites, sistemas_particulas)
+    # Criar inimigos baseado na configuração da fase
+    for i in range(config_fase["inimigos_por_nivel"]):
+        inimigo = InimigoLED(nivel, config_fase, todos_sprites, sistemas_particulas)
         inimigos.append(inimigo)
         todos_sprites.append(inimigo)
     
@@ -630,7 +763,14 @@ while executando:
         
         # Atualizar inimigos
         for inimigo in inimigos[:]:
-            inimigo.update(jogador.rect.centerx, jogador.rect.centery)
+            atirou, tiro_info = inimigo.update(jogador.rect.centerx, jogador.rect.centery)
+            
+            # Se o inimigo atirou, criar um tiro
+            if atirou and tiro_info:
+                x, y, angulo = tiro_info
+                tiro = TiroLED(x, y, 0, todos_sprites, sistemas_particulas, inimigo=True, angulo=angulo)
+                tiros_inimigos.append(tiro)
+                todos_sprites.append(tiro)
             
             # Verificar colisão com jogador
             if jogador.rect.colliderect(inimigo.rect):
@@ -638,43 +778,73 @@ while executando:
                     game_over = True
                     rodando = False
         
-        # Atualizar tiros
+        # Atualizar tiros do jogador
         for tiro in tiros[:]:
             if tiro.update():  # Se retornar True, saiu da tela
                 tiros.remove(tiro)
+                if tiro in todos_sprites:
+                    todos_sprites.remove(tiro)
                 continue
                 
             # Verificar colisão com inimigos
             for inimigo in inimigos[:]:
                 if tiro.rect.colliderect(inimigo.rect):
                     if inimigo.tomar_dano():  # Se retornar True, inimigo morreu
-                        jogador.pontuacao += 100 + inimigo.tipo * 50
+                        jogador.pontuacao += inimigo.pontos
                         inimigos.remove(inimigo)
+                        if inimigo in todos_sprites:
+                            todos_sprites.remove(inimigo)
                         
-                        # Efeito de explosão
+                        # Efeito de explosão LED
                         sistemas_particulas.add_particulas(
                             inimigo.rect.centerx, inimigo.rect.centery,
-                            LARANJA, 30, 3, 5, 50
+                            inimigo.cor_led, 30, 3, 5, 50, True
                         )
                         
-                        # Chance de dropar power-up
-                        if random.random() > 0.7:
+                        # Chance de dropar power-up baseada na configuração da fase
+                        if random.random() > config_fase["powerup_chance"]:
                             tipo = random.choice(['vida', 'arma'])
-                            powerup = PowerUp(inimigo.rect.centerx, inimigo.rect.centery, 
+                            powerup = PowerUpLED(inimigo.rect.centerx, inimigo.rect.centery, 
                                             tipo, todos_sprites, sistemas_particulas)
                             powerups.append(powerup)
                             todos_sprites.append(powerup)
                     
                     if tiro in tiros:
                         tiros.remove(tiro)
+                        if tiro in todos_sprites:
+                            todos_sprites.remove(tiro)
                     break
+        
+        # Atualizar tiros dos inimigos
+        for tiro in tiros_inimigos[:]:
+            if tiro.update():  # Se retornar True, saiu da tela
+                tiros_inimigos.remove(tiro)
+                if tiro in todos_sprites:
+                    todos_sprites.remove(tiro)
+                continue
+                
+            # Verificar colisão com jogador
+            if tiro.rect.colliderect(jogador.rect):
+                if jogador.tomar_dano():
+                    game_over = True
+                    rodando = False
+                
+                tiros_inimigos.remove(tiro)
+                if tiro in todos_sprites:
+                    todos_sprites.remove(tiro)
+                
+                # Efeito de colisão LED
+                sistemas_particulas.add_particulas(
+                    tiro.rect.centerx, tiro.rect.centery,
+                    ROXO_LED, 15, 2, 3, 30, True
+                )
         
         # Atualizar power-ups
         poder_spawn_timer += 1
         if poder_spawn_timer >= 900:  # 15 segundos em 60 FPS
             poder_spawn_timer = 0
             tipo = random.choice(['vida', 'arma'])
-            powerup = PowerUp(random.randint(50, LARGURA-50), -30, 
+            powerup = PowerUpLED(random.randint(50, LARGURA-50), -30, 
                             tipo, todos_sprites, sistemas_particulas)
             powerups.append(powerup)
             todos_sprites.append(powerup)
@@ -682,7 +852,8 @@ while executando:
         for powerup in powerups[:]:
             if powerup.update():  # Se saiu da tela
                 powerups.remove(powerup)
-                todos_sprites.remove(powerup)
+                if powerup in todos_sprites:
+                    todos_sprites.remove(powerup)
                 continue
                 
             # Verificar colisão com jogador
@@ -692,19 +863,19 @@ while executando:
                 elif powerup.type == 'arma':
                     jogador.powerup()
                 
-                # Efeito de coleta
+                # Efeito de coleta LED
                 sistemas_particulas.add_particulas(
                     powerup.rect.centerx, powerup.rect.centery,
-                    VERDE if powerup.type == 'arma' else VERMELHO, 
-                    20, 2, 4, 40
+                    powerup.cor_led, 20, 2, 4, 40, True
                 )
                 
                 powerups.remove(powerup)
-                todos_sprites.remove(powerup)
+                if powerup in todos_sprites:
+                    todos_sprites.remove(powerup)
         
         # Verificar se nível completo
         if len(inimigos) == 0:
-            mostrar_nivel_completo(nivel, sistemas_particulas)
+            mostrar_nivel_completo_led(nivel, sistemas_particulas)
             rodando = False
         
         # Desenhar / renderizar
@@ -717,17 +888,27 @@ while executando:
         # Desenhar partículas
         sistemas_particulas.draw(tela)
         
-        # Desenhar HUD
-        desenhar_barra_vida(tela, 20, 20, jogador.vidas * 33.3)
-        mostrar_texto(tela, f"Vidas: {jogador.vidas}", 24, 70, 40)
+        # Desenhar HUD com tema LED
+        desenhar_barra_vida_led(tela, 20, 20, jogador.vidas * 20)  # 5 vidas = 100%
+        mostrar_texto_led(tela, f"Vidas: {jogador.vidas}", 24, 70, 40, CIANO_LED)
         
-        mostrar_texto(tela, f"Pontuação: {jogador.pontuacao}", 24, LARGURA // 2, 20)
-        mostrar_texto(tela, f"Nível: {nivel}", 24, LARGURA - 70, 20)
+        mostrar_texto_led(tela, f"Pontuação: {jogador.pontuacao}", 24, LARGURA // 2, 20, AZUL_LED)
+        mostrar_texto_led(tela, f"Fase: {nivel + 1}/{total_fases}", 24, LARGURA - 70, 20, ROXO_LED)
         
         # Mostrar power-up ativo
         if jogador.powerup_ativo:
             tempo_restante = max(0, (jogador.powerup_tempo - pygame.time.get_ticks()) // 1000)
-            mostrar_texto(tela, f"Power-up: {tempo_restante}s", 20, LARGURA - 70, 50, VERDE)
+            mostrar_texto_led(tela, f"Power-up: {tempo_restante}s", 20, LARGURA - 70, 50, VERDE_LED)
         
         # Atualizar tela
         pygame.display.flip()
+    
+    # Avançar para a próxima fase se não foi game over
+    if not game_over:
+        nivel += 1
+        # Se completou todas as fases, volta para a primeira mas mais difícil
+        if nivel >= total_fases:
+            nivel = total_fases - 1  # Permanece na última fase
+
+pygame.quit()
+sys.exit()
