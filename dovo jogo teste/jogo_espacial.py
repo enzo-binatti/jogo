@@ -24,65 +24,68 @@ VERMELHO_LED = (255, 20, 20)
 AMARELO_LED = (255, 255, 0)
 CIANO_LED = (0, 255, 255)
 
-# Carregar imagens
+# Carregar imagens — versão robusta
 def carregar_imagem(nome_arquivo, tamanho=None):
     try:
-        # Verificar se o arquivo existe
         if not os.path.exists(nome_arquivo):
-            # Criar uma imagem de fallback baseada no nome
+            print(f"⚠️ Arquivo não encontrado: {nome_arquivo} — usando fallback")
             superficie = pygame.Surface((64, 64), pygame.SRCALPHA)
-            
-            if "inimigo 1" in nome_arquivo:
-                # Inimigo tipo 1: círculo vermelho
-                pygame.draw.circle(superficie, VERMELHO_LED, (32, 32), 32)
-                pygame.draw.circle(superficie, (255, 100, 100), (32, 32), 24)
-                pygame.draw.circle(superficie, (200, 50, 50), (32, 32), 16)
-            elif "inimigo 2" in nome_arquivo:
-                # Inimigo tipo 2: triângulo azul (baseado na divisão matemática)
-                pontos = [(32, 10), (10, 54), (54, 54)]
-                pygame.draw.polygon(superficie, AZUL_LED, pontos)
-                pygame.draw.polygon(superficie, CIANO_LED, pontos, 3)
-                # Adicionar texto "12÷4=3.5"
-                fonte = pygame.font.SysFont("Arial", 12)
-                texto = fonte.render("12÷4=3.5", True, (255, 255, 255))
-                superficie.blit(texto, (20, 25))
-            elif "inimigo 3" in nome_arquivo:
-                # Inimigo tipo 3: quadrado roxo (baseado na multiplicação)
-                pygame.draw.rect(superficie, ROXO_LED, (10, 10, 44, 44))
-                pygame.draw.rect(superficie, (200, 100, 255), (15, 15, 34, 34), 3)
-                # Adicionar texto "1.2×0.5=0.6"
-                fonte = pygame.font.SysFont("Arial", 12)
-                texto = fonte.render("1.2×0.5=0.6", True, (255, 255, 255))
-                superficie.blit(texto, (18, 25))
-            elif "nave" in nome_arquivo:
-                # Nave do jogador
-                pontos = [(32, 10), (10, 54), (32, 44), (54, 54)]
-                pygame.draw.polygon(superficie, VERDE_LED, pontos)
-                pygame.draw.polygon(superficie, AMARELO_LED, pontos, 90)
-                pygame.draw.circle(superficie, AZUL_LED, (32, 20), 5)
-            else:
-                # Fallback genérico
-                pygame.draw.circle(superficie, (255, 0, 0), (32, 32), 32)
-                
+            pygame.draw.circle(superficie, (255, 0, 0), (32, 32), 32)  # Indica erro
             if tamanho:
                 superficie = pygame.transform.scale(superficie, tamanho)
             return superficie
-        
+
         imagem = pygame.image.load(nome_arquivo).convert_alpha()
         if tamanho:
             imagem = pygame.transform.scale(imagem, tamanho)
+        print(f"🖼️ {nome_arquivo} carregado com sucesso!")
         return imagem
-    except:
-        # Fallback para uma imagem gerada se o arquivo não for encontrado
+
+    except Exception as e:
+        print(f"❌ Erro ao carregar {nome_arquivo}: {e}")
         superficie = pygame.Surface((64, 64), pygame.SRCALPHA)
         pygame.draw.circle(superficie, (255, 0, 0), (32, 32), 32)
+        if tamanho:
+            superficie = pygame.transform.scale(superficie, tamanho)
         return superficie
+
+# Verificar arquivos no início
+print("🔍 Verificando arquivos...")
+for arquivo in ["vida.png", "X 3.png", "nave.png", "inimigo 1.png", "inimigo 2.png", "inimigo 3.png"]:
+    if os.path.exists(arquivo):
+        print(f"✅ {arquivo} encontrado!")
+    else:
+        print(f"❌ {arquivo} NÃO encontrado!")
 
 # Carregar sprites das imagens
 nave_img = carregar_imagem("nave.png", (100, 100))
 inimigo1_img = carregar_imagem("inimigo 1.png", (70, 70))
 inimigo2_img = carregar_imagem("inimigo 2.png", (70, 70))
 inimigo3_img = carregar_imagem("inimigo 3.png", (70, 70))
+
+# Carregar power-ups — usando os nomes REAIS que você enviou
+vida_img = carregar_imagem("vida.png", (60, 60))        # Coração
+arma_img = carregar_imagem("X 3.png", (60, 60))        # "X 3" — note o espaço!
+
+# Fallback manual se o carregamento falhou (verificado pelo círculo vermelho)
+if vida_img.get_size() == (64, 64) and vida_img.get_at((32,32)) == (255,0,0,255):
+    print("🛠️ Gerando fallback para vida.png")
+    vida_img = pygame.Surface((32, 32), pygame.SRCALPHA)
+    pygame.draw.circle(vida_img, (255, 0, 0), (16, 12), 8)
+    pygame.draw.circle(vida_img, (255, 0, 0), (24, 12), 8)
+    pygame.draw.polygon(vida_img, (255, 0, 0), [(16, 28), (8, 12), (24, 12)])
+
+if arma_img.get_size() == (64, 64) and arma_img.get_at((32,32)) == (255,0,0,255):
+    print("🛠️ Gerando fallback para X 3.png")
+    arma_img = pygame.Surface((32, 32), pygame.SRCALPHA)
+    fonte = pygame.font.SysFont("Arial", 20, bold=True)
+    texto = fonte.render("x3", True, (255, 255, 0))
+    arma_img.blit(texto, (5, 5))
+
+powerup_imgs = {
+    'vida': vida_img,
+    'arma': arma_img
+}
 
 # Gerar outros sprites com tema LED
 def gerar_sprite_tiro_led():
@@ -100,27 +103,6 @@ def gerar_sprite_tiro_led():
     
     # Luz interna
     pygame.draw.rect(superficie, (0, 100, 255, 100), (3, 4, 4, 16))
-    
-    return superficie
-
-def gerar_sprite_powerup_led(tipo):
-    superficie = pygame.Surface((32, 32), pygame.SRCALPHA)
-    
-    if tipo == 'vida':
-        # Coração mais realista
-        pontos = [(16, 8), (22, 14), (16, 24), (10, 14)]
-        pygame.draw.polygon(superficie, (200, 50, 50, 200), pontos)
-        pygame.draw.polygon(superficie, (220, 70, 70), pontos, 2)
-        
-    else:  # 'arma'
-        # Raio mais realista
-        pontos = [(16, 6), (22, 16), (16, 16), (22, 26), (16, 26), (10, 16), (16, 16)]
-        pygame.draw.polygon(superficie, (50, 100, 200, 200), pontos)
-        pygame.draw.polygon(superficie, (70, 120, 220), pontos, 2)
-    
-    # Contorno circular
-    pygame.draw.circle(superficie, (100, 100, 150, 100), (16, 16), 15)
-    pygame.draw.circle(superficie, (150, 150, 200), (16, 16), 15, 2)
     
     return superficie
 
@@ -161,10 +143,6 @@ def gerar_fundo_estrelas_led():
 
 # Carregar sprites LED restantes
 tiro_img = gerar_sprite_tiro_led()
-powerup_imgs = {
-    'vida': gerar_sprite_powerup_led('vida'),
-    'arma': gerar_sprite_powerup_led('arma')
-}
 fundo_estrelas = gerar_fundo_estrelas_led()
 
 # Efeitos de partículas LED
@@ -475,7 +453,7 @@ class InimigoLED:
                 self.tiro_timer += 1
                 if self.tiro_timer >= self.tempo_recarga_tiro and distancia < 300:
                     self.tiro_timer = 0
-                    # Criar um tiro inimigo (será implementado na lógica principal)
+                    # Criar um tiro inimigo
                     return True, (self.rect.centerx, self.rect.centery, angulo)
         
         # Se sair da tela, reaparece em cima
@@ -515,8 +493,7 @@ class TiroLED:
             self.vx = math.cos(angulo) * 5
             self.vy = math.sin(angulo) * 5
             self.speedy = 0  # Anula a velocidade padrão
-            # Mudar cor para tiro inimigo
-            self.cor_led = VERMELHO_LED if not inimigo else ROXO_LED
+            self.cor_led = ROXO_LED
         else:
             self.vx = direcao * 5
             self.vy = -10
@@ -702,7 +679,10 @@ def mostrar_nivel_completo_led(nivel, sistemas_particulas):
     pygame.time.delay(2500)
 
 # Inicialização do jogo
+print("🚀 Iniciando Space Dark LED...")
 sistemas_particulas = SistemaParticulasLED()
+
+# Mostrar tela de início
 mostrar_tela_inicio_led(sistemas_particulas)
 
 # Loop principal do jogo
